@@ -204,7 +204,7 @@ jobs:
       - name: Run sed and perl Commands
         run: |
           echo "Changing to configuration directory: $CONFIG..."
-          cd "$CONFIG/kernel_platform"
+          cd "$CONFIG"
           
           echo "Running sed commands..."
 
@@ -236,6 +236,19 @@ jobs:
           # find . -type f -exec sed -i 's/\(make\s\+-C[^\n]*\)\s\+/\1 -j$(nproc) /g' {} +
 
 
+
+          echo "Modified lines from setlocalversion scripts:"
+          grep 'echo "$res' ./common/scripts/setlocalversion
+          grep 'echo "$res' ./msm-kernel/scripts/setlocalversion
+          grep 'echo "$res' ./external/dtc/scripts/setlocalversion
+
+          echo "Verifying Wild+ was added..."
+          grep 'echo "$res-Wild+"' ./common/scripts/setlocalversion || (echo "Wild+ not found in common/setlocalversion!" && exit 1)
+          grep 'echo "$res-Wild+"' ./msm-kernel/scripts/setlocalversion || (echo "Wild+ not found in msm-kernel/setlocalversion!" && exit 1)
+          grep 'echo "$res-Wild+"' ./external/dtc/scripts/setlocalversion || (echo "Wild+ not found in dtc/setlocalversion!" && exit 1)
+
+
+   
 
 
           # Debugging: Check if Wild+ is set in setlocalversion files

@@ -1,0 +1,30 @@
+name: Trigger Build on Push
+
+on:
+  push:
+    branches:
+      - oneplus/sm8750
+    paths:
+      - 'kernel_manifest/**'
+
+jobs:
+  trigger-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Trigger Build and Release Workflow
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const octokit = github.getOctokit(process.env.GITHUB_TOKEN);
+            await octokit.actions.createWorkflowDispatch({
+              owner: 'OnePlusOSS',
+              repo: 'OnePlus_KernelSU_SUSFS',
+              workflow_id: 'build-kernel-release.yml',
+              ref: 'main',
+              inputs: {
+                make_release: true
+              }
+            });
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

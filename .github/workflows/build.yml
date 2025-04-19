@@ -236,61 +236,21 @@ jobs:
           # find . -type f -exec sed -i 's/\(make\s\+-C[^\n]*\)\s\+/\1 -j$(nproc) /g' {} +
 
 
-          cat ./common/scripts/mkcompile_h 
 
-          cat ./msm-kernel/scripts/mkcompile_h
+          echo "ccheck bazel mode..."
+          if [ -f "build/build.sh" ]; then
+            sed -i 's/-dirty//' ./common/scripts/setlocalversion
+          else
+            rm -rf ./common/android/abi_gki_protected_exports_*
+            sed -i "/stable_scmversion_cmd/s/-maybe-dirty//g" ./build/kernel/kleaf/impl/stamp.bzl
+            sed -E -i '/^CONFIG_LOCALVERSION=/ s/(.*)"$/\1-Wild+"/' ./common/arch/arm64/configs/gki_defconfig
+          fi
 
-          cat ./common/scripts/setlocalversion
+          echo "Final kernel name string:"
+          (cd common && ./scripts/setlocalversion)
 
-          cat ./msm-kernel/scripts/setlocalversion
-
-          cat ./external/dtc/scripts/setlocalversion
-          
-
-
-          echo "Modified lines from setlocalversion scripts:"
-          grep 'echo "$res' ./common/scripts/setlocalversion
-          grep 'echo "$res' ./msm-kernel/scripts/setlocalversion
-          grep 'echo "$res' ./external/dtc/scripts/setlocalversion
-
-          echo "Verifying Wild+ was added..."
-          grep 'echo "$res-Wild+"' ./common/scripts/setlocalversion || (echo "Wild+ not found in common/setlocalversion!" && exit 1)
-          grep 'echo "$res-Wild+"' ./msm-kernel/scripts/setlocalversion || (echo "Wild+ not found in msm-kernel/setlocalversion!" && exit 1)
-          grep 'echo "$res-Wild+"' ./external/dtc/scripts/setlocalversion || (echo "Wild+ not found in dtc/setlocalversion!" && exit 1)
-
-
-   
-
-
-          # Debugging: Check if Wild+ is set in setlocalversion files
-          echo "Checking for Wild+ in setlocalversion files:"
-          grep 'echo "\$res' ./common/scripts/setlocalversion
-          grep 'echo "\$res' ./msm-kernel/scripts/setlocalversion
-          grep 'echo "\$res' ./external/dtc/scripts/setlocalversion
-          
-          # Debugging: Check UTS_VERSION in mkcompile_h
-          echo "Checking UTS_VERSION in mkcompile_h..."
-          cat ./common/scripts/mkcompile_h | grep UTS_VERSION
-          cat ./msm-kernel/scripts/mkcompile_h | grep UTS_VERSION
-
-          # Debugging: Check kernel flags in config files
-          echo "Checking kernel flags (LTO, etc.) in gki_defconfig..."
-          grep -E 'CONFIG_LTO=|CONFIG_LTO_CLANG' ./common/arch/arm64/configs/gki_defconfig
-          grep -E 'CONFIG_LTO=|CONFIG_LTO_CLANG' ./msm-kernel/configs/gki_defconfig
-          
-          # Step 4: Check the full uname -a output to verify kernel version info
-          echo "Running uname -a to check the kernel version info..."
-          uname -a
-
-          # Step 5: Optional - Ensure the correct value is in uname -a
-          echo "Verifying UTS_VERSION with uname -a..."
-          uname -a | grep -o 'SMP PREEMPT.*'
-
-          # Step 6: Check other important flags (if needed)
-          echo "Full uname -a output:"
-          uname -a
-
-          # Debugging: end
+          echo "Expected UTS version:"
+          grep UTS_VERSION ./common/scripts/mkcompile_h
 
       - name: Build the Kernel
         run: |

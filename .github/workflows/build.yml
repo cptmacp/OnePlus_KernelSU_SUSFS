@@ -233,9 +233,6 @@ jobs:
           perl -pi -e 's{UTS_VERSION="\$\(echo \$UTS_VERSION \$CONFIG_FLAGS \$TIMESTAMP \| cut -b -\$UTS_LEN\)"}{UTS_VERSION="#1 SMP PREEMPT Thu Mar 05 04:20:00 UTC 2025"}' ./common/scripts/mkcompile_h
           perl -pi -e 's{UTS_VERSION="\$\(echo \$UTS_VERSION \$CONFIG_FLAGS \$TIMESTAMP \| cut -b -\$UTS_LEN\)"}{UTS_VERSION="#1 SMP PREEMPT Thu Mar 05 04:20:00 UTC 2025"}' ./msm-kernel/scripts/mkcompile_h
           
-          # find . -type f -exec sed -i 's/\(make\s\+-C[^\n]*\)\s\+/\1 -j$(nproc) /g' {} +
-
-
 
           echo "ccheck bazel mode..."
           if [ -f "build/build.sh" ]; then
@@ -246,11 +243,7 @@ jobs:
             sed -E -i '/^CONFIG_LOCALVERSION=/ s/(.*)"$/\1-Wild+"/' ./common/arch/arm64/configs/gki_defconfig
           fi
 
-          echo "Final kernel name string:"
-          (cd common && ./scripts/setlocalversion)
-
-          echo "Expected UTS version:"
-          grep UTS_VERSION ./common/scripts/mkcompile_h
+          find . -type f -exec sed -i 's/\(make\s\+-C[^\n]*\)\s\+/\1 -j$(nproc) /g' {} +
 
       - name: Build the Kernel
         run: |
@@ -270,6 +263,14 @@ jobs:
             BUILD_TYPE="perf"
             BAZEL_ARGS+=(-g)
           fi
+
+          export KBUILD_BUILD_TIMESTAMP="$(date -u)"
+
+          BAZEL_ARGS+=(
+            --action_env=EXTRAVERSION="-mycustomsuffix"
+            --action_env=KBUILD_BUILD_VERSION="CustomBuildVersion-2025"
+            --action_env=KBUILD_BUILD_TIMESTAMP="$KBUILD_BUILD_TIMESTAMP"
+          )
           
           (stdbuf -oL bash -c '
             while true; do

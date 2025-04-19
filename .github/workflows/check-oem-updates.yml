@@ -1,15 +1,12 @@
 name: Check OEM Kernel Manifest for Updates
 
-
 permissions:
-  contents: write  # Allow writing to repository contents (for pushing tags)
-  actions: write   # Allows triggering actions
-
+  contents: write
+  actions: write
 
 on:
   schedule:
-    # - cron: "0 0 * * *"  # Runs every day at midnight UTC
-    - cron: '*/5 * * * *'  # Runs every 5 minutes
+    - cron: '*/5 * * * *'
   workflow_dispatch:
 
 jobs:
@@ -19,16 +16,18 @@ jobs:
       - name: Checkout self
         uses: actions/checkout@v3
 
+      - name: Restore last seen commit from cache
+        uses: actions/cache@v3
+        with:
+          path: .last_oem_commit
+          key: "oem-commit"
+
       - name: Check for new commit in OEM repo
         id: check
         run: |
           LATEST_COMMIT=$(curl -s https://api.github.com/repos/OnePlusOSS/kernel_manifest/commits?sha=oneplus/sm8750 | jq -r '.[0].sha')
           echo "Latest OEM Commit: $LATEST_COMMIT"
 
-          # Use GitHub Actions cache to store and retrieve the last seen commit hash
-          CACHE_KEY="oem-commit-${LATEST_COMMIT}"
-
-          # Check if the cache for the previous commit exists
           CACHE_PATH=".last_oem_commit"
           if [ -f "$CACHE_PATH" ]; then
             LAST_COMMIT=$(cat $CACHE_PATH)
@@ -37,7 +36,6 @@ jobs:
           fi
           echo "Last Seen Commit: $LAST_COMMIT"
 
-          # Compare the commits
           if [ "$LATEST_COMMIT" != "$LAST_COMMIT" ]; then
             echo "New commit detected!"
             echo "::set-output name=changed::true"
@@ -47,20 +45,19 @@ jobs:
             echo "::set-output name=changed::false"
           fi
 
-      - name: Trigger Kernel Build Workflow
-        if: steps.check.outputs.changed == 'true'
-        uses: benc-uk/workflow-dispatch@v1
-        with:
-          workflow: build-kernel-release.yml
-          ref: op13
-          inputs: '{ "make_release": "true" }'
-        env:
-          GITHUB_TOKEN: ${{ secrets.MY_PAT }}
+      # - name: Trigger Kernel Build Workflow
+      #   if: steps.check.outputs.changed == 'true'
+      #   uses: benc-uk/workflow-dispatch@v1
+      #   with:
+      #     workflow: build-kernel-release.yml
+      #     ref: op13
+      #     inputs: '{ "make_release": "true" }'
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.MY_PAT }}
 
       - name: Cache the commit hash
+        if: steps.check.outputs.changed == 'true'
         uses: actions/cache@v3
         with:
           path: .last_oem_commit
-          key: "oem-commit-${LATEST_COMMIT}"
-          restore-keys: |
-            oem-commit-
+          key: "oem-commit"

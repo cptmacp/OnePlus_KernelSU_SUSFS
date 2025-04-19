@@ -204,7 +204,7 @@ jobs:
       - name: Run sed and perl Commands
         run: |
           echo "Changing to configuration directory: $CONFIG..."
-          cd "$CONFIG"
+          cd "$CONFIG/kernel_platform"
           
           echo "Running sed commands..."
 
@@ -235,6 +235,17 @@ jobs:
           
           # find . -type f -exec sed -i 's/\(make\s\+-C[^\n]*\)\s\+/\1 -j$(nproc) /g' {} +
 
+
+          cat ./common/scripts/mkcompile_h 
+
+          cat ./msm-kernel/scripts/mkcompile_h
+
+          cat ./common/scripts/setlocalversion
+
+          cat ./msm-kernel/scripts/setlocalversion
+
+          cat ./external/dtc/scripts/setlocalversion
+          
 
 
           echo "Modified lines from setlocalversion scripts:"

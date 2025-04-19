@@ -1,5 +1,11 @@
 name: Check OEM Kernel Manifest for Updates
 
+
+permissions:
+  contents: write  # Allow writing to repository contents (for pushing tags)
+  actions: write   # Allows triggering actions
+
+
 on:
   schedule:
     # - cron: "0 0 * * *"  # Runs every day at midnight UTC
@@ -49,7 +55,7 @@ jobs:
           ref: op13
           inputs: '{ "make_release": "true" }'
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.MY_PAT }}
 
       - name: Cache the commit hash
         uses: actions/cache@v3

@@ -263,8 +263,8 @@ jobs:
             BUILD_TYPE="perf"
             BAZEL_ARGS+=(-g)
           fi
-
-          export KBUILD_BUILD_TIMESTAMP="$(date -u)"
+          
+          export KBUILD_BUILD_TIMESTAMP="$(date -u +'%Y-%m-%dT%H-%M-%SZ')"
 
           BAZEL_ARGS+=(
             --action_env=EXTRAVERSION="-mycustomsuffix"

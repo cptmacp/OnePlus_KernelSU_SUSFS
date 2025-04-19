@@ -223,6 +223,9 @@ jobs:
           sed -i 's/-dirty//' ./external/dtc/scripts/setlocalversion
           sed -i 's/-dirty//' ./build/kernel/kleaf/workspace_status_stamp.py || echo "No workspace_status_stamp.py!"
 
+          grep 'echo "$res' ./common/scripts/setlocalversion
+
+
           sed -i '/echo "LTO $LTO "/i export LTO=thin' ./oplus/build/oplus_setup.sh
           sed -i 's/export REPACK_IMG=true/export REPACK_IMG=false/g' ./oplus/build/oplus_setup.sh
          
@@ -231,6 +234,39 @@ jobs:
           perl -pi -e 's{UTS_VERSION="\$\(echo \$UTS_VERSION \$CONFIG_FLAGS \$TIMESTAMP \| cut -b -\$UTS_LEN\)"}{UTS_VERSION="#1 SMP PREEMPT Thu Mar 05 04:20:00 UTC 2025"}' ./msm-kernel/scripts/mkcompile_h
           
           find . -type f -exec sed -i 's/\(make\s\+-C[^\n]*\)\s\+/\1 -j$(nproc) /g' {} +
+
+
+
+
+          # Debugging: Check if Wild+ is set in setlocalversion files
+          echo "Checking for Wild+ in setlocalversion files:"
+          grep 'echo "\$res' ./common/scripts/setlocalversion
+          grep 'echo "\$res' ./msm-kernel/scripts/setlocalversion
+          grep 'echo "\$res' ./external/dtc/scripts/setlocalversion
+          
+          # Debugging: Check UTS_VERSION in mkcompile_h
+          echo "Checking UTS_VERSION in mkcompile_h..."
+          cat ./common/scripts/mkcompile_h | grep UTS_VERSION
+          cat ./msm-kernel/scripts/mkcompile_h | grep UTS_VERSION
+
+          # Debugging: Check kernel flags in config files
+          echo "Checking kernel flags (LTO, etc.) in gki_defconfig..."
+          grep -E 'CONFIG_LTO=|CONFIG_LTO_CLANG' ./common/arch/arm64/configs/gki_defconfig
+          grep -E 'CONFIG_LTO=|CONFIG_LTO_CLANG' ./msm-kernel/configs/gki_defconfig
+          
+          # Step 4: Check the full uname -a output to verify kernel version info
+          echo "Running uname -a to check the kernel version info..."
+          uname -a
+
+          # Step 5: Optional - Ensure the correct value is in uname -a
+          echo "Verifying UTS_VERSION with uname -a..."
+          uname -a | grep -o 'SMP PREEMPT.*'
+
+          # Step 6: Check other important flags (if needed)
+          echo "Full uname -a output:"
+          uname -a
+
+          # Debugging: end
 
       - name: Build the Kernel
         run: |
@@ -286,8 +322,11 @@ jobs:
           echo "Navigating to AnyKernel3 directory..."
           cd ./AnyKernel3
 
-          # Zip the files in the AnyKernel3 directory with a new naming convention
-          ZIP_NAME="${{ inputs.model }}_${{ inputs.android_version }}_${{ inputs.kernel_version }}_Next_SUSFS_AnyKernel3.zip"
+          # Get current timestamp in format YYYYMMDD_HHMMSS
+          TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+
+          # Zip the files in the AnyKernel3 directory with a new naming convention including timestamp
+          ZIP_NAME="${{ inputs.model }}_${{ inputs.android_version }}_${{ inputs.kernel_version }}_Next_SUSFS_AnyKernel3_DEV_${TIMESTAMP}.zip"
           echo "Creating zip file $ZIP_NAME..."
           zip -r "../$ZIP_NAME" ./*
 

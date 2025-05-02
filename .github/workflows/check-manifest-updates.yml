@@ -6,7 +6,7 @@ permissions:
 
 on:
   schedule:
-    - cron: '0 0 * * *'
+    - cron: '0 0 * * 0'
   workflow_dispatch:
 
 jobs:
@@ -45,15 +45,15 @@ jobs:
             echo "::set-output name=changed::false"
           fi
 
-      # - name: Trigger Kernel Build Workflow
-      #   if: steps.check.outputs.changed == 'true'
-      #   uses: benc-uk/workflow-dispatch@v1
-      #   with:
-      #     workflow: build-kernel-release.yml
-      #     ref: op13
-      #     inputs: '{ "make_release": "true" }'
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.MY_PAT }}
+      - name: Trigger Kernel Build Workflow
+        if: steps.check.outputs.changed == 'true'
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: build-kernel-release.yml
+          ref: op13
+          inputs: '{ "make_release": "true" }'
+        env:
+          GITHUB_TOKEN: ${{ secrets.MY_PAT }}
 
       - name: Cache the commit hash
         if: steps.check.outputs.changed == 'true'
